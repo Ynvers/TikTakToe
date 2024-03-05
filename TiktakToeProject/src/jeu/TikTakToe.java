@@ -88,64 +88,60 @@ public class TikTakToe {
     }
 
     public void computerTurn() {
-        int[] bestMove = minimax(grille, joueurActuel);
+        int profondeur = countEmptyCells();
+        int[] bestMove = minmax(grille, joueurActuel, profondeur);
         int row = bestMove[0];
         int col = bestMove[1];
         grille[row][col] = joueurActuel;
         joueurActuel = (joueurActuel == 'X') ? 'O' : 'X';
     }
 
-    private int[] minimax(char[][] board, char player) {
-        int[] bestMove = new int[]{-1, -1};
-        int bestScore = (player == 'X') ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+    private int[] minmax(char[][] grille, char joueurActuel, int profondeur) {
+        if (victory() || equality() || profondeur == 0) {
+            return new int[]{evaluate(grille)};
+        }
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (board[i][j] == ' ') {
-                    board[i][j] = player;
-                    int score = minimaxHelper(board, player, player == 'X');
-                    board[i][j] = ' ';
-
-                    if ((player == 'X' && score > bestScore) || (player == 'O' && score < bestScore)) {
-                        bestScore = score;
-                        bestMove[0] = i;
-                        bestMove[1] = j;
+        int[] bestMove = new int[3];
+        if (joueurActuel == 'O') {
+            int bestScore = Integer.MIN_VALUE;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (grille[i][j] == ' ') {
+                        grille[i][j] = joueurActuel;
+                        int score = minmax(grille, 'X', profondeur - 1)[0];
+                        grille[i][j] = ' '; // Annuler le coup
+    
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMove[0] = i;
+                            bestMove[1] = j;
+                            bestMove[2] = score;
+                        }
+                    }
+                }
+            }
+        } else {
+            int bestScore = Integer.MAX_VALUE;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (grille[i][j] == ' ') {
+                        grille[i][j] = joueurActuel;
+                        int score = minmax(grille, 'O', profondeur - 1)[0];
+                        grille[i][j] = ' '; // Annuler le coup
+    
+                        if (score < bestScore) {
+                            bestScore = score;
+                            bestMove[0] = i;
+                            bestMove[1] = j;
+                            bestMove[2] = score;
+                        }
                     }
                 }
             }
         }
-
         return bestMove;
-    }
+    } 
 
-    private int minimaxHelper(char[][] board, char player, boolean isMaximizing) {
-        if (victory()) {
-            return (player == 'X') ? -1 : 1;
-        } else if (equality()) {
-            return 0;
-        }
-
-        char opponent = (player == 'X') ? 'O' : 'X';
-        int bestScore = (isMaximizing) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (board[i][j] == ' ') {
-                    board[i][j] = (isMaximizing) ? player : opponent;
-                    int score = minimaxHelper(board, player, !isMaximizing);
-                    board[i][j] = ' ';
-
-                    if (isMaximizing) {
-                        bestScore = Math.max(bestScore, score);
-                    } else {
-                        bestScore = Math.min(bestScore, score);
-                    }
-                }
-            }
-        }
-
-        return bestScore;
-    }
 
     public boolean victory() {
         for (int i = 0; i < 3; i++) {
@@ -177,5 +173,65 @@ public class TikTakToe {
             }
         }
         return true;
+    }
+
+    public int evaluate(char[][] grille) {
+        if (victory() && joueurActuel == 'O') {
+            return 10;
+        } else if (victory() && joueurActuel == 'X') {
+            return -10;
+        } else if (equality()) {
+            return 0;
+        } else {
+            int score = 0;
+            // Parcourir les lignes, colonnes et diagonales pour évaluer la position
+            for (int i = 0; i < 3; i++) {
+                // Évaluer les lignes
+                score += evaluerConfiguration(grille[i][0], grille[i][1], grille[i][2]);
+                // Évaluer les colonnes
+                score += evaluerConfiguration(grille[0][i], grille[1][i], grille[2][i]);
+            }
+            // Évaluer les diagonales
+            score += evaluerConfiguration(grille[0][0], grille[1][1], grille[2][2]);
+            score += evaluerConfiguration(grille[0][2], grille[1][1], grille[2][0]);
+
+            return score;
+        }
+    }
+
+    private int evaluerConfiguration(char c1, char c2, char c3) {
+        int score = 0;
+        if (c1 == 'O') {
+            score = 1;
+        }
+        if (c2 == 'O') {
+            score = 10;
+        }
+        if (c3 == 'O') {
+            score = 100;
+        }
+        // Poids pour 'X'
+        if (c1 == 'X') {
+            score = -1;
+        }
+        if (c2 == 'X') {
+            score = -10;
+        }
+        if (c3 == 'X') {
+            score = -100;
+        }
+        return score;
+    }
+
+    private int countEmptyCells() {
+        int count = 0;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (grille[i][j] == ' ') {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }
