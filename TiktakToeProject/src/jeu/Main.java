@@ -40,17 +40,17 @@ public class Main{
         TikTakToe jeu = new TikTakToe(); 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Bienvenue au jeu du morpion");
-        if (jeu.modeDeJeu(scanner)) {
+        if (jeu.gameMode(scanner)) {
             while(true) {
                 jeu.takeTurn(scanner, jeu);
                 if (jeu.victory()) {
-                    jeu.printGrille();
-                    System.out.println("Le joueur " + jeu.win + " a gagner" );
+                    jeu.printBoard();
+                    System.out.println("Le joueur " + jeu.winner + " a gagner" );
                     scanner.close();
                     break;
                 }
                 if (jeu.equality()) {
-                    jeu.printGrille();
+                    jeu.printBoard();
                     System.out.println("Equality");
                     scanner.close();
                     break;
@@ -58,14 +58,14 @@ public class Main{
 
                 jeu.computerTurn();
                 if (jeu.victory()) {
-                    jeu.printGrille();
+                    jeu.printBoard();
                     System.out.println("L'ordinateur a gagné.");
                     scanner.close();
                     break;
                 }
 
                 if (jeu.equality()) {
-                    jeu.printGrille();
+                    jeu.printBoard();
                     System.out.println("Égalité.");
                     scanner.close();
                     break;
@@ -77,13 +77,13 @@ public class Main{
             while (true){
                 jeu.takeTurn(scanner, jeu);
                 if (jeu.victory()) {
-                    jeu.printGrille();
-                    System.out.println("Le joueur " + jeu.win + " a gagner" );
+                    jeu.printBoard();
+                    System.out.println("Le joueur " + jeu.winner + " a gagner" );
                     scanner.close();
                     break;
                 }
                 if (jeu.equality()) {
-                    jeu.printGrille();
+                    jeu.printBoard();
                     System.out.println("Equality");
                     scanner.close();
                     break;
