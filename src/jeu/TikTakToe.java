@@ -1,27 +1,26 @@
 package jeu;
 
 import java.util.Scanner;
-import jeu.Exeptions.CaractereExeption;
 
 public class TikTakToe {
 
-    private char[][] grille;
-    private char joueurActuel;
-    protected char win;
+    private char[][] board;
+    private char currentPlayer;
+    protected char winner;
 
     public TikTakToe() {
-        grille = new char[3][3];
-        joueurActuel = 'X';
-        initialiserGrille();
+        board = new char[3][3];
+        currentPlayer = 'X';
+        initializeBoard();
     }
 
-    public boolean modeDeJeu(Scanner scanner) {
+    public boolean gameMode(Scanner scanner) {
         System.out.println("Choisissez (s) pour affronter l'ordinateur et (d) pour jouer contre un ami");
         char mode;
         try {
             mode = scanner.next().charAt(0);
             if (!Character.isLetter((mode))) {
-                throw new CaractereExeption("Vous devez entrer un caractère");
+                throw new IllegalArgumentException("Vous devez entrer un caractère");
             }
             while (mode != 's' && mode != 'd') {
                 System.out.println("Tu n'as compris les choix possibles Kabi, soit (s), soit (d)");
@@ -35,25 +34,25 @@ public class TikTakToe {
                 System.out.println("Au lieu que vous aller affronter l'algo un a un\nPFFFFFFFFFFF........... ");
                 return false;
             }
-        } catch (CaractereExeption e) {
+        } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
             return false;
         }
         return false;
     }
 
-    public void initialiserGrille() {
+    public void initializeBoard() {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                grille[i][j] = ' ';
+                board[i][j] = ' ';
             }
         }
     }
 
-    public void printGrille() {
+    public void printBoard() {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                System.out.print(grille[i][j]);
+                System.out.print(board[i][j]);
                 if (j < 2) {
                     System.out.print(" | ");
                 }
@@ -66,19 +65,19 @@ public class TikTakToe {
         System.out.println();
     }
 
-    public void takeTurn(Scanner scanner, TikTakToe jeu) {
-        win = joueurActuel;
-        System.out.println(joueurActuel + "'s turn.");
-        jeu.printGrille();
+    public void takeTurn(Scanner scanner, TikTakToe game) {
+        winner = currentPlayer;
+        System.out.println(currentPlayer + "'s turn.");
+        game.printBoard();
         int position;
         System.out.println("Entrer la position: ");
         try {
             position = scanner.nextInt();
             int row = (position - 1) / 3;
             int col = (position - 1) % 3;
-            if (grille[row][col] == ' ') {
-                grille[row][col] = joueurActuel;
-                joueurActuel = (joueurActuel == 'X') ? 'O' : 'X';
+            if (board[row][col] == ' ') {
+                board[row][col] = currentPlayer;
+                currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
             } else {
                 System.out.println("Position occupée");
             }
@@ -88,142 +87,169 @@ public class TikTakToe {
     }
 
     public void computerTurn() {
-        int profondeur = countEmptyCells();
-        int[] bestMove = minmax(grille, joueurActuel, profondeur);
-        int row = bestMove[0];
-        int col = bestMove[1];
-        grille[row][col] = joueurActuel;
-        joueurActuel = (joueurActuel == 'X') ? 'O' : 'X';
+        int depth = countEmptyCells(board);
+        int[] bestMove = minmax(board, currentPlayer, depth);
+        int row = bestMove[1];
+        int col = bestMove[2];
+        board[row][col] = currentPlayer;
+        currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
     }
 
     private int[] minmax(char[][] grille, char joueurActuel, int profondeur) {
         if (victory() || equality() || profondeur == 0) {
             return new int[]{evaluate(grille)};
-        }
-
-        int[] bestMove = new int[3];
+        }        
         if (joueurActuel == 'O') {
-            int bestScore = Integer.MIN_VALUE;
+            int maxEval = Integer.MIN_VALUE;
+            int[] bestMove = new int[2];
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     if (grille[i][j] == ' ') {
                         grille[i][j] = joueurActuel;
-                        int score = minmax(grille, 'X', profondeur - 1)[0];
-                        grille[i][j] = ' '; // Annuler le coup
-    
-                        if (score > bestScore) {
-                            bestScore = score;
+                        int eval = minmax(grille, 'X', profondeur - 1)[0];
+                        grille[i][j] = ' ';
+                        if (eval > maxEval) {
+                            maxEval = eval;
                             bestMove[0] = i;
                             bestMove[1] = j;
-                            bestMove[2] = score;
                         }
                     }
                 }
             }
+            return new int[] {maxEval, bestMove[0], bestMove[1]};
         } else {
-            int bestScore = Integer.MAX_VALUE;
+            int minEval = Integer.MAX_VALUE;
+            int[] bestMove = new int[2];
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     if (grille[i][j] == ' ') {
                         grille[i][j] = joueurActuel;
-                        int score = minmax(grille, 'O', profondeur - 1)[0];
+                        int eval = minmax(grille, 'O', profondeur - 1)[0];
                         grille[i][j] = ' '; // Annuler le coup
     
-                        if (score < bestScore) {
-                            bestScore = score;
+                        if (eval < minEval) {
+                            minEval = eval;
                             bestMove[0] = i;
                             bestMove[1] = j;
-                            bestMove[2] = score;
                         }
                     }
                 }
             }
+            return new int[] {minEval, bestMove[0], bestMove[1]};
         }
-        return bestMove;
     } 
-
-
+    
     public boolean victory() {
         for (int i = 0; i < 3; i++) {
-            if (grille[i][0] == grille[i][1] && grille[i][1] == grille[i][2] && grille[i][0] != ' ') {
+            if (board[i][0] == board[i][1] && board[i][1] == board[i][2] && board[i][0] != ' ') {
                 return true;
             }
         }
         for (int j = 0; j < 3; j++) {
-            if (grille[0][j] == grille[1][j] && grille[1][j] == grille[2][j] && grille[0][j] != ' ') {
+            if (board[0][j] == board[1][j] && board[1][j] == board[2][j] && board[0][j] != ' ') {
                 return true;
             }
         }
-        if (grille[0][0] == grille[1][1] && grille[1][1] == grille[2][2] && grille[0][0] != ' ') {
+        if (board[0][0] == board[1][1] && board[1][1] == board[2][2] && board[0][0] != ' ') {
             return true;
         }
-        if (grille[2][0] == grille[1][1] && grille[1][1] == grille[0][2] && grille[2][0] != ' ') {
+        if (board[2][0] == board[1][1] && board[1][1] == board[0][2] && board[2][0] != ' ') {
             return true;
         }
         return false;
-
     }
-
+    
     public boolean equality() {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                if (grille[i][j] == ' ') {
+                if (board[i][j] == ' ') {
                     return false;
                 }
             }
         }
         return true;
     }
-
+    
     public int evaluate(char[][] grille) {
-        if (victory() && joueurActuel == 'O') {
-            return 10;
-        } else if (victory() && joueurActuel == 'X') {
-            return -10;
-        } else if (equality()) {
-            return 0;
-        } else {
-            int score = 0;
-            // Parcourir les lignes, colonnes et diagonales pour évaluer la position
-            for (int i = 0; i < 3; i++) {
-                // Évaluer les lignes
-                score += evaluerConfiguration(grille[i][0], grille[i][1], grille[i][2]);
-                // Évaluer les colonnes
-                score += evaluerConfiguration(grille[0][i], grille[1][i], grille[2][i]);
-            }
-            // Évaluer les diagonales
-            score += evaluerConfiguration(grille[0][0], grille[1][1], grille[2][2]);
-            score += evaluerConfiguration(grille[0][2], grille[1][1], grille[2][0]);
-
-            return score;
-        }
-    }
-
-    private int evaluerConfiguration(char c1, char c2, char c3) {
         int score = 0;
-        if (c1 == 'O') {
-            score = 1;
-        }
-        if (c2 == 'O') {
-            score = 10;
-        }
-        if (c3 == 'O') {
-            score = 100;
-        }
-        // Poids pour 'X'
-        if (c1 == 'X') {
-            score = -1;
-        }
-        if (c2 == 'X') {
-            score = -10;
-        }
-        if (c3 == 'X') {
-            score = -100;
-        }
+        score += evaluateLine(grille, 'O'); // Joueur 'O'
+        score -= evaluateLine(grille, 'X'); // Joueur 'X'
+    
         return score;
     }
-
-    private int countEmptyCells() {
+    
+    private int evaluateLine(char[][] grille, char player) {
+        int score = 0;
+    
+        for (int i = 0; i < 3; i++) {
+            int countPlayer = 0; // Compter les jetons du joueur dans la ligne
+            int countOpponent = 0; // Compter les jetons de l'adversaire dans la ligne
+            for (int j = 0; j < 3; j++) {
+                if (grille[i][j] == player) {
+                    countPlayer++;
+                } else if (grille[i][j] != ' ') {
+                    countOpponent++;
+                }
+            }
+            score += calculateScore(countPlayer, countOpponent);
+        }
+    
+        // Évaluer les colonnes
+        for (int j = 0; j < 3; j++) {
+            int countPlayer = 0; // Compter les jetons du joueur dans la colonne
+            int countOpponent = 0; // Compter les jetons de l'adversaire dans la colonne
+            for (int i = 0; i < 3; i++) {
+                if (grille[i][j] == player) {
+                    countPlayer++;
+                } else if (grille[i][j] != ' ') {
+                    countOpponent++;
+                }
+            }
+            score += calculateScore(countPlayer, countOpponent);
+        }
+    
+        // Évaluer les diagonales
+        int countPlayerDiagonal1 = 0; // Compter les jetons du joueur dans la première diagonale
+        int countOpponentDiagonal1 = 0; // Compter les jetons de l'adversaire dans la première diagonale
+        int countPlayerDiagonal2 = 0; // Compter les jetons du joueur dans la deuxième diagonale
+        int countOpponentDiagonal2 = 0; // Compter les jetons de l'adversaire dans la deuxième diagonale
+        for (int i = 0; i < 3; i++) {
+            if (grille[i][i] == player) {
+                countPlayerDiagonal1++;
+            } else if (grille[i][i] != ' ') {
+                countOpponentDiagonal1++;
+            }
+            if (grille[i][2 - i] == player) {
+                countPlayerDiagonal2++;
+            } else if (grille[i][2 - i] != ' ') {
+                countOpponentDiagonal2++;
+            }
+        }
+        score += calculateScore(countPlayerDiagonal1, countOpponentDiagonal1);
+        score += calculateScore(countPlayerDiagonal2, countOpponentDiagonal2);
+    
+        return score;
+    }
+    
+    private int calculateScore(int countPlayer, int countOpponent) {
+        if (countPlayer == 3) {
+            return 1000; // Trois jetons alignés du joueur
+        } else if (countOpponent == 3) {
+            return -1000; // Trois jetons alignés de l'adversaire (blocage)
+        } else if (countPlayer == 2 && countOpponent == 0) {
+            return 100; // Deux jetons alignés du joueur
+        } else if (countPlayer == 0 && countOpponent == 2) {
+            return -100; // Deux jetons alignés de l'adversaire (risque de perte)
+        } else if (countPlayer == 1 && countOpponent == 0) {
+            return 10; // Un jeton du joueur
+        } else if (countPlayer == 0 && countOpponent == 1) {
+            return -10; // Un jeton de l'adversaire (risque)
+        } else {
+            return 0; // Aucune configuration significative
+        }
+    }
+    
+    private int countEmptyCells(char[][] grille) {
         int count = 0;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
@@ -234,4 +260,5 @@ public class TikTakToe {
         }
         return count;
     }
+    
 }
