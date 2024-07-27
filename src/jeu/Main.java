@@ -1,18 +1,45 @@
 package jeu;
 
 import java.util.Scanner;
-/*import javax.swing.*;
+import javax.swing.*;
 import java.awt.*;
-*/
+
+
 public class Main{
 
     public static void main(String[] args) {
 
-        /*JFrame frame = new JFrame("Accueil");
-        frame.setSize(500, 300);
+        //Créer la fenêtre principal
+        JFrame frame = new JFrame("Morpion");
+        frame.setSize(700, 500);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
 
+        //Créer le panneau représentant le menu
+        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        //Création du menu de bienvenue et de sélection de mode
+        JLabel titleLabel = new JLabel("<html><div style='text-align: center;'>Bienvenue au jeu du morpion, style Ynvers<br> votre mode de jeu</div></html>", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setBorder((null));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        mainPanel.add(titleLabel,BorderLayout.NORTH);
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10)); // Centrer les boutons avec un espacement
+
+        // Ajouter les boutons pour la sélection du mode de jeu
+        JButton modeSolo = new JButton("Mode solo");
+        JButton modeDuo = new JButton("Mode duo");
+
+        buttonPanel.add(modeSolo);
+        buttonPanel.add(modeDuo);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);        
+
+        //Ajout des éléments de base
+        frame.add(mainPanel);
+        frame.setVisible(true);
+        /* 
         JPanel panel1 = new JPanel(new BorderLayout());
         
         JPanel toPanel = new JPanel();
@@ -36,7 +63,7 @@ public class Main{
         panel1.add(centerPanel, BorderLayout.CENTER);
 
         frame.add(panel1);
-        frame.setVisible(true);*/
+        */
         TikTakToe jeu = new TikTakToe(); 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Bienvenue au jeu du morpion");
