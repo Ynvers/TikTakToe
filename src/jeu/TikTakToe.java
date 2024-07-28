@@ -1,6 +1,5 @@
 package jeu;
 
-import java.util.Scanner;
 
 public class TikTakToe {
 
@@ -14,31 +13,13 @@ public class TikTakToe {
         initializeBoard();
     }
 
-    public boolean gameMode(Scanner scanner) {
-        System.out.println("Choisissez (s) pour affronter l'ordinateur et (d) pour jouer contre un ami");
-        char mode;
-        try {
-            mode = scanner.next().charAt(0);
-            if (!Character.isLetter((mode))) {
-                throw new IllegalArgumentException("Vous devez entrer un caractère");
-            }
-            while (mode != 's' && mode != 'd') {
-                System.out.println("Tu n'as compris les choix possibles Kabi, soit (s), soit (d)");
-                System.out.println(("Reprends"));
-                mode = scanner.next().charAt(0);
-            }
-            if (mode == 's') {
-                System.out.println("Tu es bon");
-                return true;
-            } else if (mode == 'd') {
-                System.out.println("Au lieu que vous aller affronter l'algo un a un\nPFFFFFFFFFFF........... ");
-                return false;
-            }
-        } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
-            return false;
+    public boolean gameMode(boolean mode) {
+        if (mode) {
+            System.out.println("Tu es bon");
+        } else {
+            System.out.println("Au lieu que vous allez affronter l'algo un à un\nPFFFFFFFFFFF...........");
         }
-        return false;
+        return mode;
     }
 
     public void initializeBoard() {
@@ -65,24 +46,20 @@ public class TikTakToe {
         System.out.println();
     }
 
-    public void takeTurn(Scanner scanner, TikTakToe game) {
-        winner = currentPlayer;
-        System.out.println(currentPlayer + "'s turn.");
-        game.printBoard();
-        int position;
-        System.out.println("Entrer la position: ");
-        try {
-            position = scanner.nextInt();
-            int row = (position - 1) / 3;
-            int col = (position - 1) % 3;
-            if (board[row][col] == ' ') {
-                board[row][col] = currentPlayer;
+    public char[][] getBoard() {
+        return board;
+    }
+
+    public char getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void makeMove(int row, int col) {
+        if (board[row][col] == ' ') {
+            board[row][col] = currentPlayer;
+            if (!victory()) {
                 currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
-            } else {
-                System.out.println("Position occupée");
             }
-        } catch (Exception e) {
-            System.out.println("Entrée invalide. Nouvelle tentative exigée");
         }
     }
 
@@ -92,7 +69,9 @@ public class TikTakToe {
         int row = bestMove[1];
         int col = bestMove[2];
         board[row][col] = currentPlayer;
-        currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+        if (!victory()) {
+            currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+    }
     }
 
     private int[] minmax(char[][] grille, char joueurActuel, int profondeur) {

@@ -1,6 +1,5 @@
 package jeu;
 
-import java.util.Scanner;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -45,12 +44,16 @@ public class Main{
         //Ajout du panneau de bienveunue au panneau principal
         mainPanel.add(welcomPanel, "Welcome");
 
+
+        //Créer l'instance du jeu TiktakToe:
+        TikTakToe jeu = new TikTakToe(); 
+
         //Panneau du jeu en mode solo
-        JPanel soloPanel = createGamePanel(mainPanel, frame, "Morpion - Mode Solo");
+        JPanel soloPanel = createGamePanel(mainPanel, frame, "Morpion - Mode Solo", jeu, true);
         mainPanel.add(soloPanel, "Solo");
         
         //Panneau du jeu en duo
-        JPanel duoPanel = createGamePanel(mainPanel, frame, "Morpion - Mode Duo");
+        JPanel duoPanel = createGamePanel(mainPanel, frame, "Morpion - Mode Duo", jeu, false);
         mainPanel.add(duoPanel, "Duo");
 
         //Implémentation des actions pour changer de panneau
@@ -60,6 +63,9 @@ public class Main{
                 CardLayout cl = (CardLayout) (mainPanel.getLayout());
                 cl.show(mainPanel, "Solo");
                 frame.setTitle("Tu es bon");
+                jeu.initializeBoard();
+                jeu.gameMode(true);
+                resetButtons(soloPanel);
             }            
         });
 
@@ -69,77 +75,49 @@ public class Main{
                 CardLayout cl = (CardLayout) (mainPanel.getLayout());
                 cl.show(mainPanel, "Duo");
                 frame.setTitle("Faux type");
+                jeu.initializeBoard();
+                jeu.gameMode(false);
+                resetButtons(duoPanel);
             }      
         });
 
         frame.add(mainPanel);
         frame.setVisible(true);
         
-        TikTakToe jeu = new TikTakToe(); 
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Bienvenue au jeu du morpion");
-        if (jeu.gameMode(scanner)) {
-            while(true) {
-                jeu.takeTurn(scanner, jeu);
-                if (jeu.victory()) {
-                    jeu.printBoard();
-                    System.out.println("Le joueur " + jeu.winner + " a gagner" );
-                    scanner.close();
-                    break;
-                }
-                if (jeu.equality()) {
-                    jeu.printBoard();
-                    System.out.println("Equality");
-                    scanner.close();
-                    break;
-                }
-
-                jeu.computerTurn();
-                if (jeu.victory()) {
-                    jeu.printBoard();
-                    System.out.println("L'ordinateur a gagné.");
-                    scanner.close();
-                    break;
-                }
-
-                if (jeu.equality()) {
-                    jeu.printBoard();
-                    System.out.println("Égalité.");
-                    scanner.close();
-                    break;
-                }
-            
-            }
-            
-        }else {
-            while (true){
-                jeu.takeTurn(scanner, jeu);
-                if (jeu.victory()) {
-                    jeu.printBoard();
-                    System.out.println("Le joueur " + jeu.winner + " a gagner" );
-                    scanner.close();
-                    break;
-                }
-                if (jeu.equality()) {
-                    jeu.printBoard();
-                    System.out.println("Equality");
-                    scanner.close();
-                    break;
-                }
-            }
-        }
     }
 
-    private static JPanel createGamePanel(JPanel mainPanel, JFrame frame, String mode) {
+    private static JPanel createGamePanel(JPanel mainPanel, JFrame frame, String mode, TikTakToe jeu, boolean isSinglePlayer) {
         JPanel gamePanel = new JPanel(new BorderLayout());
         
         JPanel gridPanel = new JPanel( new GridLayout(3, 3));
 
         //Créer les boutons pour la grille
+        JButton[] buttons = new JButton[9];
         for (int i = 0; i < 9; i++) {
-            JButton button = new JButton("");
-            button.setFont(new Font("Arial", Font.PLAIN, 60));
-            gridPanel.add(button);
+            buttons[i] = new JButton("");
+            buttons[i].setFont(new Font("Arial", Font.PLAIN, 60));
+            int index = i;
+            buttons[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int row = index / 3;
+                    int col = index % 3;
+                    if (buttons[index].getText().equals("") && !jeu.victory() && !jeu.equality()) {
+                        buttons[index].setText(Character.toString(jeu.getCurrentPlayer()));
+                        jeu.makeMove(row, col);
+                        if (jeu.victory() || jeu.equality()) {
+                            JOptionPane.showMessageDialog(frame, jeu.victory() ? "Le joueur " + jeu.getCurrentPlayer() + " a gagné !" : "Match nul !");
+                        } else if (isSinglePlayer) {
+                            jeu.computerTurn();
+                            updateButtons(buttons, jeu);
+                            if (jeu.victory() || jeu.equality()) {
+                                JOptionPane.showMessageDialog(frame, jeu.victory() ? "L'ordinateur a gagné !" : "Match nul !");
+                            }
+                        }
+                    }
+                }
+            });
+            gridPanel.add(buttons[i]);
         }
 
         gamePanel.add(gridPanel, BorderLayout.CENTER);
@@ -163,6 +141,7 @@ public class Main{
                         ((JButton) component).setText("");
                     }
                 }
+                jeu.initializeBoard();
             }
         });
 
@@ -176,7 +155,33 @@ public class Main{
             }
         });
 
+        gamePanel.putClientProperty("gameInstance", jeu);
+        gamePanel.putClientProperty("buttonArray", buttons);
+
+
         return gamePanel;
     }
     
+    private static void updateButtons(JButton[] buttons, TikTakToe jeu) {
+        for (int i= 0; i < 9; i++) {
+            int row = i / 3;
+            int col = i % 3;
+            char value= jeu.getBoard()[row][col];
+            buttons[i].setText(value == ' ' ? "" : Character.toString(value));
+        }
+    }
+
+    private static void resetButtons(JPanel panel){
+        for (Component component : panel.getComponents()) {
+            if (component instanceof JButton) {
+                ((JButton) component).setText(" ");
+            }
+        }
+
+        TikTakToe jeu = (TikTakToe) panel.getClientProperty("gameInstance");
+        if (jeu != null) {
+            jeu.initializeBoard();
+            updateButtons((JButton[]) panel.getClientProperty("buttonArray"), jeu);
+        }
+    }
 }
